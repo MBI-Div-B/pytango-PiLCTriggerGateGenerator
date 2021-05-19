@@ -5,8 +5,9 @@ from enum import IntEnum
 
 
 class Mode(IntEnum):
-    triggered = 0
-    freerunning = 1
+    freerunning = 0
+    triggered_laser = 1
+    triggered_laser_ccd = 2
 
 
 class PiLCTriggerGateGenerator(Device):
@@ -36,8 +37,9 @@ class PiLCTriggerGateGenerator(Device):
         display_level=DispLevel.OPERATOR,
         memorized=True,
         doc="""
-1 - triggered
-2 - free running
+1 - free running
+2 - triggered laser
+3 - triggered laser & ccd
 """
     )
 
