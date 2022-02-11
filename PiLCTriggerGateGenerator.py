@@ -7,7 +7,8 @@ from enum import IntEnum
 class Mode(IntEnum):
     freerunning = 0
     triggered_laser = 1
-    triggered_laser_ccd = 2
+    triggered_laser_ccd_scattering = 2
+    triggered_laser_ccd_nexafs = 3
 
 
 class PiLCTriggerGateGenerator(Device):
@@ -38,8 +39,9 @@ class PiLCTriggerGateGenerator(Device):
         memorized=True,
         doc="""
 1 - free running
-2 - triggered laser
-3 - triggered laser & ccd
+2 - triggered laser (Input 1)
+3 - triggered laser & ccd scattering (Input 1 & 3)
+4 - triggered laser & ccd nexafs (Input 1 & 5)
 """
     )
 
@@ -100,12 +102,16 @@ class PiLCTriggerGateGenerator(Device):
         shutter_gate_delay = 0
         keithley_gate_width = self._exposure
         keithley_gate_delay = 8
+        moench_gate_width = self._exposure
+        moench_gate_delay = 8
         quantity = 1
 
         self.debug_stream('Shutter gate width set to {:d} ms'.format(shutter_gate_width))
         self.debug_stream('Shutter gate delay set to {:d} ms'.format(shutter_gate_delay))
         self.debug_stream('Keithley gate width set to {:d} ms'.format(keithley_gate_width))
         self.debug_stream('Keithley gate delay set to {:d} ms'.format(keithley_gate_delay))
+        self.debug_stream('Moench gate width set to {:d} ms'.format(moench_gate_width))
+        self.debug_stream('Moench gate delay set to {:d} ms'.format(moench_gate_delay))
         self.debug_stream('Quantity set to {:d}'.format(quantity))
 
         # define gate width in micorseconds
@@ -117,6 +123,11 @@ class PiLCTriggerGateGenerator(Device):
         self.pilc.WriteFPGA([0x09, int(keithley_gate_width*1e3)])
         # define keithley gate delay in microseconds
         self.pilc.WriteFPGA([0x0B, int(keithley_gate_delay*1e3)])
+
+        # define moench gate width in micorseconds
+        self.pilc.WriteFPGA([0x0D, int(moench_gate_width*1e3)])
+        # define moench gate delay in microseconds
+        self.pilc.WriteFPGA([0x0F, int(moench_gate_delay*1e3)])
 
         # define gate quantity
         self.pilc.WriteFPGA([0x05, int(quantity)])
