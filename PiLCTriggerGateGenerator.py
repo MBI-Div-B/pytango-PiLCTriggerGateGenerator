@@ -48,37 +48,35 @@ class PiLCTriggerGateGenerator(Device):
 
 
     shutter_gate_delay = attribute(
-        dtype=float,
+        dtype=int,
         label="shutter gate delay",
         access=AttrWriteType.READ_WRITE,
         display_level=DispLevel.EXPERT,
-        memorized=True,
         doc="shutter gate delay in ms"
     )
 
     moench_gate_delay = attribute(
-        dtype=float,
+        dtype=int,
         label="moench gate delay",
         access=AttrWriteType.READ_WRITE,
         display_level=DispLevel.EXPERT,
-        memorized=True,
         doc="moench gate delay in ms"
     )
 
     keithley_gate_delay = attribute(
-        dtype=float,
+        dtype=int,
         label="keithley gate delay",
         access=AttrWriteType.READ_WRITE,
         display_level=DispLevel.EXPERT,
-        memorized=True,
         doc="keithley gate delay in ms"
     )
 
-    _shutter_gate_delay = 0
-    _moench_gate_delay = 8
-    _keithley_gate_delay = 8
+
 
     def init_device(self):
+        self._shutter_gate_delay = 0
+        self._moench_gate_delay = 8
+        self._keithley_gate_delay = 8
         Device.init_device(self)
         try: 
             self.pilc = DeviceProxy(self.PiLCFQDN)
