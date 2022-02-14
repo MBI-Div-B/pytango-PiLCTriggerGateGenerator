@@ -38,12 +38,45 @@ class PiLCTriggerGateGenerator(Device):
         display_level=DispLevel.OPERATOR,
         memorized=True,
         doc="""
+        
 1 - free running
 2 - triggered laser (Input 1)
 3 - triggered laser & ccd scattering (Input 1 & 3)
 4 - triggered laser & ccd nexafs (Input 1 & 5)
 """
     )
+
+
+    shutter_gate_delay = attribute(
+        dtype=float,
+        label="shutter gate delay",
+        access=AttrWriteType.READ_WRITE,
+        display_level=DispLevel.EXPERT,
+        memorized=True,
+        doc="shutter gate delay in ms"
+    )
+
+    moench_gate_delay = attribute(
+        dtype=float,
+        label="moench gate delay",
+        access=AttrWriteType.READ_WRITE,
+        display_level=DispLevel.EXPERT,
+        memorized=True,
+        doc="moench gate delay in ms"
+    )
+
+    keithley_gate_delay = attribute(
+        dtype=float,
+        label="keithley gate delay",
+        access=AttrWriteType.READ_WRITE,
+        display_level=DispLevel.EXPERT,
+        memorized=True,
+        doc="keithley gate delay in ms"
+    )
+
+    _shutter_gate_delay = 0
+    _moench_gate_delay = 8
+    _keithley_gate_delay = 8
 
     def init_device(self):
         Device.init_device(self)
@@ -87,6 +120,26 @@ class PiLCTriggerGateGenerator(Device):
     def write_mode(self, value):
         self._mode = value
 
+
+    def read_shutter_gate_delay(self):
+        return self._shutter_gate_delay
+
+    def write_shutter_gate_delay(self, value):
+        self._shutter_gate_delay = value
+
+    def read_keithley_gate_delay(self):
+        return self._keithley_gate_delay
+
+    def write_keithley_gate_delay(self, value):
+        self._keithley_gate_delay = value
+
+    def read_moench_gate_delay(self):
+        return self._moench_gate_delay
+
+    def write_moench_gate_delay(self, value):
+        self._moench_gate_delay = value
+
+
     # commands
     @command()
     def prepare(self):
@@ -99,11 +152,11 @@ class PiLCTriggerGateGenerator(Device):
         else:
             shutter_gate_width = self._exposure
 
-        shutter_gate_delay = 0
+        shutter_gate_delay = self._shutter_gate_delay
         keithley_gate_width = self._exposure
-        keithley_gate_delay = 8
+        keithley_gate_delay = self._keithley_gate_delay
         moench_gate_width = self._exposure
-        moench_gate_delay = 8
+        moench_gate_delay = self._moench_gate_delay
         quantity = 1
 
         self.debug_stream('Shutter gate width set to {:d} ms'.format(shutter_gate_width))
