@@ -21,8 +21,8 @@ class PiLCTriggerGateGenerator(Device):
     PiLCFQDN = device_property(dtype=str, default_value='domain/family/member')
 
     exposure = attribute(
-        dtype=int,
-        format="%8d",
+        dtype=float,
+        format="%11.3f",
         label="Exposure",
         unit="ms",
         access=AttrWriteType.READ_WRITE,
@@ -48,35 +48,44 @@ class PiLCTriggerGateGenerator(Device):
 
 
     shutter_gate_delay = attribute(
-        dtype=int,
+        dtype=float,
+        format='%7.3f',
+        unit='ms',
         label="shutter gate delay",
         access=AttrWriteType.READ_WRITE,
         display_level=DispLevel.EXPERT,
-        doc="shutter gate delay in ms"
+        doc="shutter gate delay in ms",
+        memorized=True,
+        hw_memorized=True,
     )
 
     moench_gate_delay = attribute(
-        dtype=int,
+        dtype=float,
+        format='%7.3f',
+        unit='ms',
         label="moench gate delay",
         access=AttrWriteType.READ_WRITE,
         display_level=DispLevel.EXPERT,
-        doc="moench gate delay in ms"
+        doc="moench gate delay in ms",
+        memorized=True,
+        hw_memorized=True,
     )
 
     keithley_gate_delay = attribute(
-        dtype=int,
+        dtype=float,
+        format='%7.3f',
+        unit='ms',
         label="keithley gate delay",
         access=AttrWriteType.READ_WRITE,
         display_level=DispLevel.EXPERT,
-        doc="keithley gate delay in ms"
+        doc="keithley gate delay in ms",
+        memorized=True,
+        hw_memorized=True,
     )
 
 
 
     def init_device(self):
-        self._shutter_gate_delay = 0
-        self._moench_gate_delay = 8
-        self._keithley_gate_delay = 8
         Device.init_device(self)
         try: 
             self.pilc = DeviceProxy(self.PiLCFQDN)
@@ -90,7 +99,7 @@ class PiLCTriggerGateGenerator(Device):
         self.db = Database()
         try:
             attr = self.db.get_device_attribute_property(self.get_name(), ["exposure"])
-            self._exposure = int(attr["exposure"]["__value"][0])
+            self._exposure = float(attr["exposure"]["__value"][0])
         except Exception:
             self._exposure = -1
         try:
@@ -110,7 +119,7 @@ class PiLCTriggerGateGenerator(Device):
         return self._exposure
 
     def write_exposure(self, value):
-        self._exposure = int(round(value/10, 0)*10)
+        self._exposure = float(round(value*1000, 0)/1000)
 
     def read_mode(self):
         return self._mode
@@ -118,24 +127,23 @@ class PiLCTriggerGateGenerator(Device):
     def write_mode(self, value):
         self._mode = value
 
-
     def read_shutter_gate_delay(self):
-        return self._shutter_gate_delay
+        return float(int(self.pilc.ReadFPGA(0x07))/1000)
 
     def write_shutter_gate_delay(self, value):
-        self._shutter_gate_delay = value
+        self.pilc.WriteFPGA([0x07, int(value*1000)])
 
     def read_keithley_gate_delay(self):
-        return self._keithley_gate_delay
+        return float(int(self.pilc.ReadFPGA(0x0B))/1000)
 
     def write_keithley_gate_delay(self, value):
-        self._keithley_gate_delay = value
+        self.pilc.WriteFPGA([0x0B, int(value*1000)])
 
     def read_moench_gate_delay(self):
-        return self._moench_gate_delay
+        return float(int(self.pilc.ReadFPGA(0x0F))/1000)
 
     def write_moench_gate_delay(self, value):
-        self._moench_gate_delay = value
+        self.pilc.WriteFPGA([0x0F, int(value*1000)])
 
 
     # commands
@@ -150,35 +158,23 @@ class PiLCTriggerGateGenerator(Device):
         else:
             shutter_gate_width = self._exposure
 
-        shutter_gate_delay = self._shutter_gate_delay
         keithley_gate_width = self._exposure
-        keithley_gate_delay = self._keithley_gate_delay
         moench_gate_width = self._exposure
-        moench_gate_delay = self._moench_gate_delay
         quantity = 1
 
-        self.debug_stream('Shutter gate width set to {:d} ms'.format(shutter_gate_width))
-        self.debug_stream('Shutter gate delay set to {:d} ms'.format(shutter_gate_delay))
-        self.debug_stream('Keithley gate width set to {:d} ms'.format(keithley_gate_width))
-        self.debug_stream('Keithley gate delay set to {:d} ms'.format(keithley_gate_delay))
-        self.debug_stream('Moench gate width set to {:d} ms'.format(moench_gate_width))
-        self.debug_stream('Moench gate delay set to {:d} ms'.format(moench_gate_delay))
-        self.debug_stream('Quantity set to {:d}'.format(quantity))
+        self.debug_stream('Shutter gate width set to {:f} ms'.format(shutter_gate_width))
+        self.debug_stream('Keithley gate width set to {:f} ms'.format(keithley_gate_width))
+        self.debug_stream('Moench gate width set to {:f} ms'.format(moench_gate_width))
+        self.debug_stream('Quantity set to {:f}'.format(quantity))
 
         # define gate width in micorseconds
         self.pilc.WriteFPGA([0x03, int(shutter_gate_width*1e3)])
-        # define gate delay in microseconds
-        self.pilc.WriteFPGA([0x07, int(shutter_gate_delay*1e3)])
 
         # define keithley gate width in micorseconds
         self.pilc.WriteFPGA([0x09, int(keithley_gate_width*1e3)])
-        # define keithley gate delay in microseconds
-        self.pilc.WriteFPGA([0x0B, int(keithley_gate_delay*1e3)])
 
         # define moench gate width in micorseconds
         self.pilc.WriteFPGA([0x0D, int(moench_gate_width*1e3)])
-        # define moench gate delay in microseconds
-        self.pilc.WriteFPGA([0x0F, int(moench_gate_delay*1e3)])
 
         # define gate quantity
         self.pilc.WriteFPGA([0x05, int(quantity)])
