@@ -9,6 +9,7 @@ class Mode(IntEnum):
     triggered_laser = 1
     triggered_laser_ccd_scattering = 2
     triggered_laser_ccd_nexafs = 3
+    triggered_laser_chopper_scattering = 4
 
 
 class PiLCTriggerGateGenerator(Device):
@@ -39,10 +40,11 @@ class PiLCTriggerGateGenerator(Device):
         memorized=True,
         doc="""
         
-1 - free running
-2 - triggered laser (Input 1)
-3 - triggered laser & ccd scattering (Input 1 & 3)
-4 - triggered laser & ccd nexafs (Input 1 & 5)
+1 - Freerunning
+2 - Triggered only Laser (Input 1)
+3 - Triggered Laser & CCD_1 (Input 1 & Input 3) 
+4 - Triggered Laser & CCD_2 (Input 1 & Input 5) 
+5 - Triggered Laser & Chopper (Input 1 & Input 6) 
 """
     )
 
@@ -59,17 +61,17 @@ class PiLCTriggerGateGenerator(Device):
         hw_memorized=True,
     )
 
-    moench_gate_delay = attribute(
-        dtype=float,
-        format='%7.3f',
-        unit='ms',
-        label="moench gate delay",
-        access=AttrWriteType.READ_WRITE,
-        display_level=DispLevel.EXPERT,
-        doc="moench gate delay in ms",
-        memorized=True,
-        hw_memorized=True,
-    )
+    # moench_gate_delay = attribute(
+    #     dtype=float,
+    #     format='%7.3f',
+    #     unit='ms',
+    #     label="moench gate delay",
+    #     access=AttrWriteType.READ_WRITE,
+    #     display_level=DispLevel.EXPERT,
+    #     doc="moench gate delay in ms",
+    #     memorized=True,
+    #     hw_memorized=True,
+    # )
 
     keithley_gate_delay = attribute(
         dtype=float,
@@ -139,11 +141,11 @@ class PiLCTriggerGateGenerator(Device):
     def write_keithley_gate_delay(self, value):
         self.pilc.WriteFPGA([0x0B, int(value*1000)])
 
-    def read_moench_gate_delay(self):
-        return float(int(self.pilc.ReadFPGA(0x0F))/1000)
+    # def read_moench_gate_delay(self):
+    #     return float(int(self.pilc.ReadFPGA(0x0F))/1000)
 
-    def write_moench_gate_delay(self, value):
-        self.pilc.WriteFPGA([0x0F, int(value*1000)])
+    # def write_moench_gate_delay(self, value):
+    #     self.pilc.WriteFPGA([0x0F, int(value*1000)])
 
 
     # commands
@@ -159,12 +161,12 @@ class PiLCTriggerGateGenerator(Device):
             shutter_gate_width = self._exposure
 
         keithley_gate_width = self._exposure
-        moench_gate_width = self._exposure
+        # moench_gate_width = self._exposure
         quantity = 1
 
         self.debug_stream('Shutter gate width set to {:f} ms'.format(shutter_gate_width))
         self.debug_stream('Keithley gate width set to {:f} ms'.format(keithley_gate_width))
-        self.debug_stream('Moench gate width set to {:f} ms'.format(moench_gate_width))
+        # self.debug_stream('Moench gate width set to {:f} ms'.format(moench_gate_width))
         self.debug_stream('Quantity set to {:f}'.format(quantity))
 
         # define gate width in micorseconds
@@ -173,8 +175,8 @@ class PiLCTriggerGateGenerator(Device):
         # define keithley gate width in micorseconds
         self.pilc.WriteFPGA([0x09, int(keithley_gate_width*1e3)])
 
-        # define moench gate width in micorseconds
-        self.pilc.WriteFPGA([0x0D, int(moench_gate_width*1e3)])
+        # # define moench gate width in micorseconds
+        # self.pilc.WriteFPGA([0x0D, int(moench_gate_width*1e3)])
 
         # define gate quantity
         self.pilc.WriteFPGA([0x05, int(quantity)])
