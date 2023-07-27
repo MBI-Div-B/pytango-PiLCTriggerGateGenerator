@@ -13,13 +13,13 @@ class Mode(IntEnum):
 
 
 class PiLCTriggerGateGenerator(Device):
-    '''PiLCTriggerGateGenerator
+    """PiLCTriggerGateGenerator
 
     Provides high-level access to the PiLC Tango interface
 
-    '''
+    """
 
-    PiLCFQDN = device_property(dtype=str, default_value='domain/family/member')
+    PiLCFQDN = device_property(dtype=str, default_value="domain/family/member")
 
     exposure = attribute(
         dtype=float,
@@ -45,14 +45,13 @@ class PiLCTriggerGateGenerator(Device):
 3 - Triggered Laser & CCD_1 (Input 1 & Input 3) 
 4 - Triggered Laser & CCD_2 (Input 1 & Input 5) 
 5 - Triggered Laser & Chopper (Input 1 & Input 6) 
-"""
+""",
     )
-
 
     shutter_gate_delay = attribute(
         dtype=float,
-        format='%7.3f',
-        unit='ms',
+        format="%7.3f",
+        unit="ms",
         label="shutter gate delay",
         access=AttrWriteType.READ_WRITE,
         display_level=DispLevel.EXPERT,
@@ -75,8 +74,8 @@ class PiLCTriggerGateGenerator(Device):
 
     keithley_gate_delay = attribute(
         dtype=float,
-        format='%7.3f',
-        unit='ms',
+        format="%7.3f",
+        unit="ms",
         label="keithley gate delay",
         access=AttrWriteType.READ_WRITE,
         display_level=DispLevel.EXPERT,
@@ -85,18 +84,16 @@ class PiLCTriggerGateGenerator(Device):
         hw_memorized=True,
     )
 
-
-
     def init_device(self):
         Device.init_device(self)
-        try: 
+        try:
             self.pilc = DeviceProxy(self.PiLCFQDN)
-            self.info_stream('Connected to PiLC: {:s}'.format(self.PiLCFQDN))
+            self.info_stream("Connected to PiLC: {:s}".format(self.PiLCFQDN))
         except:
-            self.error_stream('Could not connect to PiLC: {:s}'.format(self.PiLCFQDN))
+            self.error_stream("Could not connect to PiLC: {:s}".format(self.PiLCFQDN))
             return
             self.set_state(DevState.OFF)
-        
+
         self.set_state(DevState.ON)
         self.db = Database()
         try:
@@ -121,7 +118,7 @@ class PiLCTriggerGateGenerator(Device):
         return self._exposure
 
     def write_exposure(self, value):
-        self._exposure = float(round(value*1000, 0)/1000)
+        self._exposure = float(round(value * 1000, 0) / 1000)
 
     def read_mode(self):
         return self._mode
@@ -130,16 +127,16 @@ class PiLCTriggerGateGenerator(Device):
         self._mode = value
 
     def read_shutter_gate_delay(self):
-        return float(int(self.pilc.ReadFPGA(0x07))/1000)
+        return float(int(self.pilc.ReadFPGA(0x07)) / 1000)
 
     def write_shutter_gate_delay(self, value):
-        self.pilc.WriteFPGA([0x07, int(value*1000)])
+        self.pilc.WriteFPGA([0x07, int(value * 1000)])
 
     def read_keithley_gate_delay(self):
-        return float(int(self.pilc.ReadFPGA(0x0B))/1000)
+        return float(int(self.pilc.ReadFPGA(0x0B)) / 1000)
 
     def write_keithley_gate_delay(self, value):
-        self.pilc.WriteFPGA([0x0B, int(value*1000)])
+        self.pilc.WriteFPGA([0x0B, int(value * 1000)])
 
     # def read_moench_gate_delay(self):
     #     return float(int(self.pilc.ReadFPGA(0x0F))/1000)
@@ -147,16 +144,15 @@ class PiLCTriggerGateGenerator(Device):
     # def write_moench_gate_delay(self, value):
     #     self.pilc.WriteFPGA([0x0F, int(value*1000)])
 
-
     # commands
     @command()
     def prepare(self):
         if self._exposure >= 40:
-            shutter_gate_width = (self._exposure-8)
+            shutter_gate_width = self._exposure - 8
         elif self._exposure >= 30:
-            shutter_gate_width = (self._exposure-7)
+            shutter_gate_width = self._exposure - 7
         elif self._exposure >= 20:
-            shutter_gate_width = (self._exposure-5)
+            shutter_gate_width = self._exposure - 5
         else:
             shutter_gate_width = self._exposure
 
@@ -164,16 +160,20 @@ class PiLCTriggerGateGenerator(Device):
         # moench_gate_width = self._exposure
         quantity = 1
 
-        self.debug_stream('Shutter gate width set to {:f} ms'.format(shutter_gate_width))
-        self.debug_stream('Keithley gate width set to {:f} ms'.format(keithley_gate_width))
+        self.debug_stream(
+            "Shutter gate width set to {:f} ms".format(shutter_gate_width)
+        )
+        self.debug_stream(
+            "Keithley gate width set to {:f} ms".format(keithley_gate_width)
+        )
         # self.debug_stream('Moench gate width set to {:f} ms'.format(moench_gate_width))
-        self.debug_stream('Quantity set to {:f}'.format(quantity))
+        self.debug_stream("Quantity set to {:f}".format(quantity))
 
         # define gate width in micorseconds
-        self.pilc.WriteFPGA([0x03, int(shutter_gate_width*1e3)])
+        self.pilc.WriteFPGA([0x03, int(shutter_gate_width * 1e3)])
 
         # define keithley gate width in micorseconds
-        self.pilc.WriteFPGA([0x09, int(keithley_gate_width*1e3)])
+        self.pilc.WriteFPGA([0x09, int(keithley_gate_width * 1e3)])
 
         # # define moench gate width in micorseconds
         # self.pilc.WriteFPGA([0x0D, int(moench_gate_width*1e3)])
@@ -183,21 +183,21 @@ class PiLCTriggerGateGenerator(Device):
 
     @command()
     def stop(self):
-        self.debug_stream('Stop')
+        self.debug_stream("Stop")
         self.pilc.WriteFPGA([0x01, 0])
 
     @command()
     def start(self):
-        self.debug_stream('Start in {:s} mode'.format(Mode(self._mode).name))
-        self.pilc.WriteFPGA([0x01, self._mode+1])
+        self.debug_stream("Start in {:s} mode".format(Mode(self._mode).name))
+        self.pilc.WriteFPGA([0x01, self._mode + 1])
 
     @command()
     def acquire(self):
-        self.debug_stream('Acquire')
+        self.debug_stream("Acquire")
         self.stop()
         self.prepare()
         self.start()
-    
+
 
 # start the server
 if __name__ == "__main__":
